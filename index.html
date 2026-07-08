@@ -125,8 +125,9 @@ const USE_FULLSCREEN   = true;   // hide browser chrome (the close button) — t
 // Starts muted (required to autoplay); enablejsapi lets us unmute on first tap.
 // start=19 → skips the intro and begins at the first vocals ("We're no strangers to love…").
 const START_AT = 43;   // seconds — 43 = the "Never gonna give you up" chorus
-// controls=1 → real play/pause/mute controls are shown, so no one is stuck with unstoppable audio.
-const VIDEO_EMBED = `https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1&loop=1&playlist=dQw4w9WgXcQ&controls=1&modestbranding=1&rel=0&enablejsapi=1&playsinline=1&start=${START_AT}`;
+// controls=0 → hides the video's own play/pause/mute bar. Closing the tab, using
+// the phone's volume/silent switch, or navigating away all still work as normal.
+const VIDEO_EMBED = `https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1&loop=1&playlist=dQw4w9WgXcQ&controls=0&modestbranding=1&rel=0&enablejsapi=1&playsinline=1&start=${START_AT}`;
 /* ------------------------------------------------------------------ */
 
 let remaining = CLICKS_TO_ESCAPE;
