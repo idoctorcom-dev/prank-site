@@ -54,6 +54,9 @@
   }
   .popup .video { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; }
   .popup .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  /* Invisible shield over the iframe: the cursor/finger lands on THIS, never on
+     the YouTube player itself, so its hover-triggered controls never appear. */
+  .popup .video .shield { position: absolute; inset: 0; z-index: 1; background: transparent; }
   .popup .body { padding: 16px 16px 18px; }
   .popup .msg { font-size: 16px; margin: 0 0 14px; line-height: 1.4; }
   .popup .count { color: #a24bff; font-weight: 800; }
@@ -219,6 +222,7 @@ function spawnPopup() {
     </div>
     <div class="video">
       <iframe src="${VIDEO_EMBED}" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+      <div class="shield"></div>
     </div>
     <div class="body">
       <p class="msg">${pick(taunts, seed).replace("{n}", remaining)}</p>
