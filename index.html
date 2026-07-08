@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>You Just Got Pranked 😂</title>
+<meta property="og:title" content="You Just Got Pranked 😂" />
+<meta property="og:description" content="Open at your own risk." />
+<meta property="og:type" content="website" />
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: #0a0a0f; color: #fff;
+    overflow: hidden;
+    text-align: center;
+    user-select: none; -webkit-user-select: none;
+  }
+
+  .bg {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 16px; padding: 24px;
+    background: radial-gradient(1200px 800px at 50% -10%, #1b1b3a 0%, #0a0a0f 60%);
+    animation: hue 12s linear infinite;
+  }
+  @keyframes hue { to { filter: hue-rotate(360deg); } }
+  .bg h1 { font-size: clamp(28px, 7vw, 64px); margin: 0; }
+  .bg p  { opacity: .7; font-size: clamp(14px, 3.5vw, 20px); margin: 0; max-width: 40ch; }
+  .hint { margin-top: 8px; font-size: 13px; opacity: .45; }
+
+  .popup {
+    position: fixed;
+    width: min(92vw, 420px);
+    background: #14142a; border: 1px solid #3a3a6a; border-radius: 16px;
+    box-shadow: 0 24px 80px rgba(0,0,0,.6), 0 0 0 4px rgba(120,90,255,.15);
+    overflow: hidden; z-index: 10;
+    animation: pop .18s cubic-bezier(.2,1.3,.4,1);
+  }
+  @keyframes pop { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .popup .titlebar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px;
+    background: linear-gradient(90deg, #6d5cff, #a24bff);
+    font-weight: 700; font-size: 14px;
+  }
+  .popup .titlebar .fakeclose {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(255,255,255,.25);
+    display: grid; place-items: center; font-size: 13px; cursor: pointer;
+  }
+  .popup .video { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; }
+  .popup .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .popup .body { padding: 16px 16px 18px; }
+  .popup .msg { font-size: 16px; margin: 0 0 14px; line-height: 1.4; }
+  .popup .count { color: #a24bff; font-weight: 800; }
+  .popup .leave {
+    appearance: none; border: 0; cursor: pointer;
+    background: #6d5cff; color: #fff; font-size: 16px; font-weight: 700;
+    padding: 12px 18px; border-radius: 10px; width: 100%;
+    transition: transform .06s ease;
+  }
+  .popup .leave:active { transform: scale(.97); }
+
+  .toast {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+    background: #14142a; border: 1px solid #3a3a6a;
+    padding: 10px 16px; border-radius: 999px; font-size: 14px; z-index: 50;
+    opacity: 0; transition: opacity .2s ease; pointer-events: none; max-width: 92vw;
+  }
+  .toast.show { opacity: 1; }
+
+  /* Full-screen tap-bait gate */
+  #gate {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(1000px 700px at 50% 40%, #241a4a 0%, #060610 70%);
+    cursor: pointer;
+  }
+  .gate-inner { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .gate-title {
+    font-size: clamp(20px, 5vw, 28px); font-weight: 800; letter-spacing: .5px;
+    color: #fff;
+    padding: 16px 56px;
+    background: linear-gradient(180deg, #7d6bff, #6d5cff 55%, #5a49e0);
+    border: 1px solid #8f80ff;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(109,92,255,.5), inset 0 1px 0 rgba(255,255,255,.35);
+    animation: pulse 1.4s ease-in-out infinite;
+    transition: transform .08s ease, box-shadow .08s ease;
+  }
+  #gate:active .gate-title {
+    transform: translateY(2px) scale(.98);
+    box-shadow: 0 4px 14px rgba(109,92,255,.5), inset 0 1px 0 rgba(255,255,255,.25);
+  }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+</style>
+</head>
+<body>
+
+  <div class="bg" aria-hidden="true">
+    <h1>Welcome! 🎉</h1>
+    <p>The exit is right there. Good luck finding it.</p>
+  </div>
+
+  <!-- Full-screen tap-bait: guarantees the first touch happens instantly,
+       which is the earliest a browser will EVER allow sound to start. -->
+  <div id="gate">
+    <div class="gate-inner">
+      <div class="gate-title">Enter</div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+/* ------------------------------------------------------------------ *
+ *  CONFIG
+ * ------------------------------------------------------------------ */
+const CLICKS_TO_ESCAPE = 50;
+const USE_FULLSCREEN   = true;   // hide browser chrome (the close button) — the real trap
+// Starts muted (required to autoplay); enablejsapi lets us unmute on first tap.
+// start=19 → skips the intro and begins at the first vocals ("We're no strangers to love…").
+const START_AT = 43;   // seconds — 43 = the "Never gonna give you up" chorus
+// controls=1 → real play/pause/mute controls are shown, so no one is stuck with unstoppable audio.
+const VIDEO_EMBED = `https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1&loop=1&playlist=dQw4w9WgXcQ&controls=1&modestbranding=1&rel=0&enablejsapi=1&playsinline=1&start=${START_AT}`;
+/* ------------------------------------------------------------------ */
+
+let remaining = CLICKS_TO_ESCAPE;
+let escaped = false;
+
+const taunts = [
+  "Nice try. Only <b class='count'>{n}</b> more.",
+  "You clicked. It came back. <b class='count'>{n}</b> to go.",
+  "Where do you think you're going? <b class='count'>{n}</b> left.",
+  "So close... <b class='count'>{n}</b> more clicks.",
+  "This box lives here now. <b class='count'>{n}</b> remaining.",
+  "There is no exit. Well — <b class='count'>{n}</b> clicks of one.",
+  "You and me, forever. <b class='count'>{n}</b> to freedom.",
+  "Trapped? A little. <b class='count'>{n}</b> more.",
+];
+const buttonLabels = [
+  "Let me leave 🙏", "Close", "Please stop", "I want out",
+  "Get me out of here", "Okay very funny, close", "EXIT (for real)",
+  "No more, I beg", "I have learned my lesson",
+];
+
+/* --- Fullscreen: hides the address bar + close button. Re-armed on every click. --- */
+function goFullscreen() {
+  if (!USE_FULLSCREEN || escaped) return;
+  const el = document.documentElement;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+  if (req && !document.fullscreenElement) { try { req.call(el); } catch (e) {} }
+}
+// Any click anywhere re-enters fullscreen (each click is a valid user gesture).
+document.addEventListener("click", goFullscreen, true);
+document.addEventListener("touchend", goFullscreen, true);
+
+// Unmute + blast the volume on any user tap (browsers only allow sound after a gesture).
+function unmuteAll() {
+  document.querySelectorAll(".popup iframe").forEach((f) => {
+    const cmd = (func, args) => f.contentWindow?.postMessage(
+      JSON.stringify({ event: "command", func, args: args || [] }), "*");
+    cmd("unMute"); cmd("setVolume", [100]); cmd("playVideo");
+  });
+}
+document.addEventListener("click", unmuteAll, true);
+document.addEventListener("touchend", unmuteAll, true);
+// If they Esc out, taunt them.
+document.addEventListener("fullscreenchange", () => {
+  if (!document.fullscreenElement && !escaped) showToast("Escape won't save you. Keep clicking.");
+});
+
+/* --- Back-button trap --- */
+for (let i = 0; i < CLICKS_TO_ESCAPE; i++) history.pushState({ trap: i }, "");
+window.addEventListener("popstate", () => {
+  if (!escaped) history.pushState({ trap: 1 }, "");
+});
+
+/* --- "Leave site?" nag on close/reload --- */
+window.addEventListener("beforeunload", (e) => {
+  if (!escaped) { e.preventDefault(); e.returnValue = ""; return ""; }
+});
+
+/* --- Kill the easy escape reflexes --- */
+document.addEventListener("contextmenu", (e) => { if (!escaped) e.preventDefault(); }); // no right-click menu
+document.addEventListener("keydown", (e) => {
+  if (escaped) return;
+  const k = e.key.toLowerCase();
+  // Block refresh (F5 / Ctrl+R) and back (Alt+Left). Cmd/Ctrl+W can't be blocked — browser-reserved.
+  if (k === "f5" || ((e.ctrlKey || e.metaKey) && k === "r") || (e.altKey && k === "arrowleft")) {
+    e.preventDefault();
+    showToast("That won't work either 😈");
+  }
+}, true);
+
+/* --- helpers --- */
+function rnd(min, max) { return min + (Math.floor(performance.now()) % Math.max(1, (max - min))); }
+function pick(arr, seed) { return arr[seed % arr.length]; }
+function showToast(text) {
+  const t = document.getElementById("toast");
+  t.innerHTML = text; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1600);
+}
+
+function spawnPopup() {
+  if (escaped) return;
+  const box = document.createElement("div");
+  box.className = "popup";
+  const seed = (CLICKS_TO_ESCAPE - remaining);
+  box.innerHTML = `
+    <div class="titlebar">
+      <span>⚠️ Important Message</span>
+      <span class="fakeclose" title="haha">✕</span>
+    </div>
+    <div class="video">
+      <iframe src="${VIDEO_EMBED}" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    </div>
+    <div class="body">
+      <p class="msg">${pick(taunts, seed).replace("{n}", remaining)}</p>
+      <button class="leave">${pick(buttonLabels, seed)}</button>
+    </div>`;
+
+  const w = Math.min(window.innerWidth * 0.92, 420);
+  const maxLeft = Math.max(0, window.innerWidth  - w - 8);
+  const maxTop  = Math.max(0, window.innerHeight - 420 - 8);
+  box.style.left = rnd(8, maxLeft || 8) + "px";
+  box.style.top  = rnd(8, maxTop  || 8) + "px";
+
+  const onClose = () => {
+    remaining--;
+    box.remove();
+    goFullscreen();                 // re-grab fullscreen on the way out
+    if (remaining <= 0) { win(); return; }
+    showToast(`${remaining} to go…`);
+    spawnPopup();                   // it always comes back
+    setTimeout(unmuteAll, 400);     // unmute the fresh box once its iframe is ready
+  };
+  box.querySelector(".leave").addEventListener("click", onClose);
+  box.querySelector(".fakeclose").addEventListener("click", onClose);
+  document.body.appendChild(box);
+}
+
+function win() {
+  escaped = true;
+  if (document.fullscreenElement) document.exitFullscreen?.();
+  document.querySelector(".bg").innerHTML =
+    `<h1>Fine. You win. 🏆</h1><p>You clicked ${CLICKS_TO_ESCAPE} times. You're free… unless you refresh 😈</p>`;
+}
+
+/* Show the first box IMMEDIATELY on load so its video is already loaded and
+   playing (muted) — that way the very first tap unmutes instantly, no lag.
+   Sound legally cannot start before that first tap in any browser. */
+spawnPopup();
+
+/* Tapping the gate = the first user gesture. Removes the gate, goes fullscreen,
+   and blasts the already-loaded audio. This is the earliest a browser permits sound. */
+function firstTap() {
+  document.getElementById("gate")?.remove();
+  goFullscreen();
+  unmuteAll();
+  setTimeout(unmuteAll, 150);
+  setTimeout(unmuteAll, 500);
+}
+document.getElementById("gate").addEventListener("click", firstTap, { once: true });
+document.getElementById("gate").addEventListener("touchend", firstTap, { once: true });
+</script>
+</body>
+</html>
